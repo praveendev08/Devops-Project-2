@@ -12,9 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PORT: ${ { secrets.PORT} }
-      MONGO_URI: ${ { secrets.MONGO_URI } }
-      JWT_SECRET: ${ { secrets.JWT_SECRET } }
+      PORT: ${{ secrets.PORT }}
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
 
     services:
       mongo:
@@ -26,10 +27,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+
+
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: '18'
+
+
 
       - name: Wait for MongoDB to be ready
         run: |
@@ -40,11 +45,15 @@ jobs:
           done
           echo "MongoDb is up"
 
+
+
       - name: Seed MongoDB
         working-directory: ./backend
         run: |
           npm install
           node seedTasksData.js 
+
+
 
       - name: Running Backend Tests
         working-directory: ./backend
