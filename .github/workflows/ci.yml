@@ -1,0 +1,68 @@
+name: MERN CI
+
+on:
+  push:
+    branches: [ "main" ]
+  # Optional but nice to have:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  mongo-init:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '18'
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          sudo apt-get update && sudo apt-get install -y netcat-openbsd
+          until nc -z localhost 27017; do
+            echo "waiting for MongoDB..."
+            sleep 2
+          done
+          echo "MongoDb is up"
+
+      - name: Seed MongoDB
+        working-directory: ./backend
+        run: |
+          npm install
+          node seedTasksData.js 
+
+  test:
+    runs-on: ubuntu-latestgit 
+    needs: mongo-init
+
+    env:
+      PORT: ${ secrets.PORT }
+      MONGO_URI: ${ secrets.MONGO_URI }
+      JWT_SECRET: ${ secrets.JWT_SECRET }
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies for backend
+        working-directory: ./backend
+        run: npm install
+
+      - name: Running Backend Tests
+        working-directory: ./backend
+        run: npm test
